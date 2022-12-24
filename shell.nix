@@ -6,5 +6,6 @@ pkgs.mkShell {
     pkgs.haskellPackages.fourmolu
     pkgs.haskellPackages.haskell-language-server
     pkgs.haskellPackages.hlint
+    pkgs.nodePackages.prettier
   ];
 }
