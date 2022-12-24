@@ -1,0 +1,8 @@
+resolver: lts-19.33
+nix:
+  enable: true
+
+build:
+  copy-bins: false
+packages:
+- .
