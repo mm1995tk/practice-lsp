@@ -20,11 +20,15 @@ handlers =
           case res of
             Right (Just (MessageActionItem "Turn on")) -> do
               let regOpts = CodeLensRegistrationOptions Nothing Nothing (Just False)
+              let chopts = TextDocumentChangeRegistrationOptions Nothing TdSyncFull
 
               _ <- registerCapability STextDocumentCodeLens regOpts $ \_req responder -> do
                 let cmd = Command "Say hello" "lsp-hello-command" Nothing
                     rsp = List [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
                 responder (Right rsp)
+              
+              -- file changed
+              _ <- registerCapability STextDocumentDidChange chopts $ \_notif -> sendNotification SWindowShowMessage (ShowMessageParams MtInfo "file changed!")
               pure ()
             Right _ ->
               sendNotification SWindowShowMessage (ShowMessageParams MtInfo "Not turning on code lenses")
@@ -35,7 +39,7 @@ handlers =
         let RequestMessage _ _ _ (HoverParams _doc pos _workDone) = req
             Position _l _c' = pos
             rsp = Hover ms (Just range)
-            ms = HoverContents $ markedUpContent "lsp-demo-simple-server" "12123"
+            ms = HoverContents $ md "hello world"
             range = Range pos pos
         responder (Right $ Just rsp)
     ]
@@ -50,3 +54,6 @@ main =
       , interpretHandler = \env -> Iso (runLspT env) liftIO
       , options = defaultOptions
       }
+
+md :: T.Text -> MarkupContent
+md = MarkupContent MkMarkdown
