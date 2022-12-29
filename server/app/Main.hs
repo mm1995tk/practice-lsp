@@ -4,6 +4,7 @@
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Functor (void)
 import qualified Data.Text as T
+import Language.LSP.Diagnostics (partitionBySource)
 import Language.LSP.Server
 import Language.LSP.Types
 import Text.Printf (printf)
@@ -52,13 +53,36 @@ handleCodeLens = requestHandler STextDocumentHover $ \req responder ->
    in responder (Right $ Just rsp)
 
 registerCapabilities :: LspT () IO ()
-registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens
+registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens *> registerCapabilityOfFileOpened
+
+registerCapabilityOfFileOpened :: LspT () IO ()
+registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen opts $ \(NotificationMessage _ _ params) ->
+  compileFromParams params
+  where
+    opts = TextDocumentRegistrationOptions Nothing
+    compileFromParams (DidOpenTextDocumentParams TextDocumentItem{..}) = compile $ toNormalizedUri _uri
+
+compile :: NormalizedUri -> LspT () IO ()
+compile uri = publishDiagnostics 100 uri Nothing (partitionBySource diagnostics)
+  where
+    diagnostics =
+      [ Diagnostic
+          { _range = Range (Position 0 0) (Position 0 5)
+          , _severity = Just DsError
+          , _code = Nothing
+          , _source = Nothing
+          , _message = "diagnostic message 1"
+          , _tags = Nothing
+          , _relatedInformation = Nothing
+          }
+      ]
 
 registerCapabilityOfFileChanged :: LspT () IO ()
 registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange opts $ \(NotificationMessage _ _ params) ->
-  sendNotification SWindowShowMessage $ ShowMessageParams MtInfo (getMsg params)
+  compileFromParams params *> sendNotification SWindowShowMessage (ShowMessageParams MtInfo (getMsg params))
   where
     opts = TextDocumentChangeRegistrationOptions Nothing TdSyncFull
+    compileFromParams (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) = compile $ toNormalizedUri _uri
     getMsg (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) =
       T.pack $ printf "%s changed!" (T.unpack $ getUri _uri)
 
