@@ -53,7 +53,7 @@ handleCodeLens = requestHandler STextDocumentHover $ \req responder ->
    in responder (Right $ Just rsp)
 
 registerCapabilities :: LspT () IO ()
-registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens *> registerCapabilityOfFileOpened
+registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens *> registerCapabilityOfFileOpened *> registerCapabilityOfFileClosed
 
 registerCapabilityOfFileOpened :: LspT () IO ()
 registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen opts $ \(NotificationMessage _ _ params) ->
@@ -71,6 +71,12 @@ registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChan
     getMsg (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) =
       T.pack $ printf "%s changed!" (T.unpack $ getUri _uri)
 
+registerCapabilityOfFileClosed :: LspT () IO ()
+registerCapabilityOfFileClosed = void $ registerCapability STextDocumentDidClose opts $ \(NotificationMessage _ _ DidCloseTextDocumentParams{_textDocument = TextDocumentIdentifier{_uri}}) ->
+  flushDiagnosticsBySource 100 $ Just $ getUri _uri
+  where
+    opts = TextDocumentRegistrationOptions Nothing
+
 registerCapabilityOfCodeLens :: LspT () IO ()
 registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens opts $ \_req responder -> responder (Right rsp)
   where
@@ -79,14 +85,14 @@ registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens o
     rsp = List [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
 
 compile :: NormalizedUri -> LspT () IO ()
-compile uri = publishDiagnostics 100 uri Nothing (partitionBySource diagnostics)
+compile uri = publishDiagnostics 100 uri Nothing (partitionBySource $ diagnostics (fromNormalizedUri uri))
   where
-    diagnostics =
+    diagnostics uri =
       [ Diagnostic
           { _range = Range (Position 0 0) (Position 0 5)
           , _severity = Just DsError
           , _code = Nothing
-          , _source = Nothing
+          , _source = Just $ getUri uri
           , _message = "diagnostic message 1"
           , _tags = Nothing
           , _relatedInformation = Nothing
