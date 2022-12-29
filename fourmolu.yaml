@@ -1,0 +1,4 @@
+indentation: 2
+function-arrows: trailing
+indent-wheres: true
+newlines-between-decls: 1
