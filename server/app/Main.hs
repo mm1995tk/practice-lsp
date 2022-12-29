@@ -62,21 +62,6 @@ registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen 
     opts = TextDocumentRegistrationOptions Nothing
     compileFromParams (DidOpenTextDocumentParams TextDocumentItem{..}) = compile $ toNormalizedUri _uri
 
-compile :: NormalizedUri -> LspT () IO ()
-compile uri = publishDiagnostics 100 uri Nothing (partitionBySource diagnostics)
-  where
-    diagnostics =
-      [ Diagnostic
-          { _range = Range (Position 0 0) (Position 0 5)
-          , _severity = Just DsError
-          , _code = Nothing
-          , _source = Nothing
-          , _message = "diagnostic message 1"
-          , _tags = Nothing
-          , _relatedInformation = Nothing
-          }
-      ]
-
 registerCapabilityOfFileChanged :: LspT () IO ()
 registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange opts $ \(NotificationMessage _ _ params) ->
   compileFromParams params *> sendNotification SWindowShowMessage (ShowMessageParams MtInfo (getMsg params))
@@ -92,6 +77,21 @@ registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens o
     opts = CodeLensRegistrationOptions Nothing Nothing (Just False)
     cmd = Command "Say hello" "lsp-hello-command" Nothing
     rsp = List [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
+
+compile :: NormalizedUri -> LspT () IO ()
+compile uri = publishDiagnostics 100 uri Nothing (partitionBySource diagnostics)
+  where
+    diagnostics =
+      [ Diagnostic
+          { _range = Range (Position 0 0) (Position 0 5)
+          , _severity = Just DsError
+          , _code = Nothing
+          , _source = Nothing
+          , _message = "diagnostic message 1"
+          , _tags = Nothing
+          , _relatedInformation = Nothing
+          }
+      ]
 
 md :: T.Text -> MarkupContent
 md = MarkupContent MkMarkdown
