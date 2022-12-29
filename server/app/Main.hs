@@ -55,17 +55,17 @@ registerCapabilities :: LspT () IO ()
 registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens
 
 registerCapabilityOfFileChanged :: LspT () IO ()
-registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange chopts $ \(NotificationMessage _ _ params) ->
+registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange opts $ \(NotificationMessage _ _ params) ->
   sendNotification SWindowShowMessage $ ShowMessageParams MtInfo (getMsg params)
   where
-    chopts = TextDocumentChangeRegistrationOptions Nothing TdSyncFull
+    opts = TextDocumentChangeRegistrationOptions Nothing TdSyncFull
     getMsg (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) =
       T.pack $ printf "%s changed!" (T.unpack $ getUri _uri)
 
 registerCapabilityOfCodeLens :: LspT () IO ()
-registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens regOpts $ \_req responder -> responder (Right rsp)
+registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens opts $ \_req responder -> responder (Right rsp)
   where
-    regOpts = CodeLensRegistrationOptions Nothing Nothing (Just False)
+    opts = CodeLensRegistrationOptions Nothing Nothing (Just False)
     cmd = Command "Say hello" "lsp-hello-command" Nothing
     rsp = List [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
 
