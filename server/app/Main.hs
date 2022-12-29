@@ -53,7 +53,11 @@ handleCodeLens = requestHandler STextDocumentHover $ \req responder ->
    in responder (Right $ Just rsp)
 
 registerCapabilities :: LspT () IO ()
-registerCapabilities = registerCapabilityOfFileChanged *> registerCapabilityOfCodeLens *> registerCapabilityOfFileOpened *> registerCapabilityOfFileClosed
+registerCapabilities =
+  registerCapabilityOfFileChanged
+    *> registerCapabilityOfCodeLens
+    *> registerCapabilityOfFileOpened
+    *> registerCapabilityOfFileClosed
 
 registerCapabilityOfFileOpened :: LspT () IO ()
 registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen opts $ \(NotificationMessage _ _ params) ->
