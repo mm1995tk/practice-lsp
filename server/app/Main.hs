@@ -29,19 +29,7 @@ handlers =
     ]
 
 handleIntialized :: Handlers (LspT () IO)
-handleIntialized = notificationHandler SInitialized $ void . handler
-  where
-    handler _ = sendRequest SWindowShowMessageRequest params $ \case
-      Right (Just (MessageActionItem "Turn on")) -> registerCapabilities
-      Right _ ->
-        sendNotification SWindowShowMessage (ShowMessageParams MtInfo "Not turning on code lenses")
-      Left err ->
-        sendNotification SWindowShowMessage (ShowMessageParams MtError $ "Something went wrong!\n" <> T.pack (show err))
-    params =
-      ShowMessageRequestParams
-        MtInfo
-        "Turn on code lenses?"
-        (Just [MessageActionItem "Turn on", MessageActionItem "Don't"])
+handleIntialized = notificationHandler SInitialized $ const registerCapabilities
 
 handleCodeLens :: Handlers (LspT () IO)
 handleCodeLens = requestHandler STextDocumentHover $ \req responder ->
