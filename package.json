@@ -47,7 +47,7 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
-		"compile": "stack build && tsc -b",
+		"compile": "stack build --copy-bins && tsc -b && rm -f ./server/output/server-exe && mv ~/.local/bin/server-exe ./server/output/server-exe",
 		"watch": "stack build && tsc -b -w",
 		"lint": "eslint ./client/src --ext .ts,.tsx",
 		"postinstall": "cd client && npm install  && cd ..",

@@ -26,9 +26,26 @@ library
       Paths_server
   hs-source-dirs:
       server/src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  default-extensions:
+      OverloadedStrings
+      RecordWildCards
+      MultiWayIf
+      TupleSections
+      LambdaCase
+      BangPatterns
+      DeriveGeneric
+      DerivingVia
+      DeriveFunctor
+      GADTs
+      GADTSyntax
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -Wall -Wno-name-shadowing -Wredundant-constraints -dynamic
   build-depends:
       base >=4.7 && <5
+    , lsp
+    , megaparsec
+    , text
+    , transformers
   default-language: Haskell2010
 
 executable server-exe
@@ -37,10 +54,27 @@ executable server-exe
       Paths_server
   hs-source-dirs:
       server/app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      OverloadedStrings
+      RecordWildCards
+      MultiWayIf
+      TupleSections
+      LambdaCase
+      BangPatterns
+      DeriveGeneric
+      DerivingVia
+      DeriveFunctor
+      GADTs
+      GADTSyntax
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -Wall -Wno-name-shadowing -Wredundant-constraints -dynamic -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , lsp
+    , megaparsec
     , server
+    , text
+    , transformers
   default-language: Haskell2010
 
 test-suite server-test
@@ -50,8 +84,25 @@ test-suite server-test
       Paths_server
   hs-source-dirs:
       server/test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      OverloadedStrings
+      RecordWildCards
+      MultiWayIf
+      TupleSections
+      LambdaCase
+      BangPatterns
+      DeriveGeneric
+      DerivingVia
+      DeriveFunctor
+      GADTs
+      GADTSyntax
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -Wall -Wno-name-shadowing -Wredundant-constraints -dynamic -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , lsp
+    , megaparsec
     , server
+    , text
+    , transformers
   default-language: Haskell2010

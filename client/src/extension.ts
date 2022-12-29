@@ -16,17 +16,18 @@ export const activate = (context: ExtensionContext) => {
     "Language Server Example",
     serverOptions({
       serverModule: context.asAbsolutePath(
-        path.join("~/.local/bin", "server-exe")
+        path.join("server", "output", "server-exe")
       ),
     }),
     clientOptions
   );
 
   // Start the client. This will also launch the server
-  client.start();
+  context.subscriptions.push(client.start());
 };
 
 export const deactivate = (): Thenable<void> | undefined => {
+  console.log("fuck");
   if (client) {
     return client.stop();
   }
@@ -41,10 +42,14 @@ const serverOptions: (deps: {
   serverModule: string;
 }) => ServerOptions = ({ serverModule }) => {
   return {
-    run: { module: serverModule, transport: TransportKind.ipc },
+    run: {
+      command: serverModule,
+      // transport: TransportKind.ipc
+    },
     debug: {
-      module: serverModule,
-      transport: TransportKind.ipc,
+      command: serverModule,
+      args: [],
+      // transport: TransportKind.ipc,
     },
   };
 };
