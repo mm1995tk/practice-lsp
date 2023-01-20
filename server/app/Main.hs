@@ -7,7 +7,6 @@ import qualified Data.Text as T
 import Language.LSP.Diagnostics (partitionBySource)
 import Language.LSP.Server
 import Language.LSP.Types
-import Text.Printf (printf)
 
 main :: IO Int
 main =
@@ -48,36 +47,38 @@ registerCapabilities =
     *> registerCapabilityOfFileClosed
 
 registerCapabilityOfFileOpened :: LspT () IO ()
-registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen opts $ \(NotificationMessage _ _ params) ->
-  compileFromParams params
+registerCapabilityOfFileOpened = void $ registerCapability STextDocumentDidOpen opts handler
   where
     opts = TextDocumentRegistrationOptions Nothing
-    compileFromParams (DidOpenTextDocumentParams TextDocumentItem{..}) = compile $ toNormalizedUri _uri
+    handler :: Handler (LspT () IO) 'TextDocumentDidOpen
+    handler (NotificationMessage{_params = (DidOpenTextDocumentParams TextDocumentItem{_text, _uri})}) =
+      compile (toNormalizedUri _uri) _text
 
 registerCapabilityOfFileChanged :: LspT () IO ()
-registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange opts $ \(NotificationMessage _ _ params) ->
-  compileFromParams params *> sendNotification SWindowShowMessage (ShowMessageParams MtInfo (getMsg params))
+registerCapabilityOfFileChanged = void $ registerCapability STextDocumentDidChange opts handler
   where
     opts = TextDocumentChangeRegistrationOptions Nothing TdSyncFull
-    compileFromParams (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) = compile $ toNormalizedUri _uri
-    getMsg (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _) =
-      T.pack $ printf "%s changed!" (T.unpack $ getUri _uri)
+    handler :: Handler (LspT () IO) 'TextDocumentDidChange
+    handler (NotificationMessage{_params = (DidChangeTextDocumentParams VersionedTextDocumentIdentifier{_uri} _)}) =
+      sendNotification SWindowShowMessage $ ShowMessageParams MtInfo (T.concat [getUri _uri, "changed"])
 
 registerCapabilityOfFileClosed :: LspT () IO ()
-registerCapabilityOfFileClosed = void $ registerCapability STextDocumentDidClose opts $ \(NotificationMessage _ _ DidCloseTextDocumentParams{_textDocument = TextDocumentIdentifier{_uri}}) ->
-  flushDiagnosticsBySource 100 $ Just $ getUri _uri
+registerCapabilityOfFileClosed = void $ registerCapability STextDocumentDidClose opts handler
   where
     opts = TextDocumentRegistrationOptions Nothing
+    handler :: Handler (LspT () IO) 'TextDocumentDidClose
+    handler (NotificationMessage{_params = DidCloseTextDocumentParams{_textDocument = TextDocumentIdentifier{_uri}}}) =
+      flushDiagnosticsBySource 100 $ Just (getUri _uri)
 
 registerCapabilityOfCodeLens :: LspT () IO ()
-registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens opts $ \_req responder -> responder (Right rsp)
+registerCapabilityOfCodeLens = void $ registerCapability STextDocumentCodeLens opts handler
   where
     opts = CodeLensRegistrationOptions Nothing Nothing (Just False)
     cmd = Command "Say hello" "lsp-hello-command" Nothing
-    rsp = List [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
+    handler _req responder = responder . Right . List $ [CodeLens (mkRange 0 0 0 100) (Just cmd) Nothing]
 
-compile :: NormalizedUri -> LspT () IO ()
-compile uri = publishDiagnostics 100 uri Nothing (partitionBySource $ diagnostics (fromNormalizedUri uri))
+compile :: NormalizedUri -> T.Text -> LspT () IO ()
+compile uri msg = publishDiagnostics 100 uri Nothing (partitionBySource $ diagnostics (fromNormalizedUri uri))
   where
     diagnostics uri =
       [ Diagnostic
@@ -85,7 +86,7 @@ compile uri = publishDiagnostics 100 uri Nothing (partitionBySource $ diagnostic
           , _severity = Just DsError
           , _code = Nothing
           , _source = Just $ getUri uri
-          , _message = "diagnostic message 1"
+          , _message = msg
           , _tags = Nothing
           , _relatedInformation = Nothing
           }
