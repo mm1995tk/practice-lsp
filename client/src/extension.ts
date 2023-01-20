@@ -4,7 +4,6 @@ import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
-  TransportKind,
 } from "vscode-languageclient/node";
 
 let client: LanguageClient;
@@ -27,7 +26,6 @@ export const activate = (context: ExtensionContext) => {
 };
 
 export const deactivate = (): Thenable<void> | undefined => {
-  console.log("fuck");
   if (client) {
     return client.stop();
   }
